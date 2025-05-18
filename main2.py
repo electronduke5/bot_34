@@ -883,7 +883,7 @@ async def complete_post_creation(callback: CallbackQuery, state: FSMContext):
                     f"✅ Пост *{post['title'].replace('.', r'\.')}* успешно создан\!\n\n"
                     f"> {post['rarity']['name']}\n"
                     f"Коллекция: {post['collection']['name']}\n"
-                    f"🎖️ _\\{post['rarity']['points']} очков_"
+                    f"🎖️ _{post['rarity']['points']} очков_"
                 )
 
                 if data.get('media'):
