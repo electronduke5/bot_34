@@ -30,6 +30,7 @@ API_TOKEN = os.getenv("BOT_TOKEN")
 GRAPHQL_URL = os.getenv("GRAPHQL_API_URL")
 
 bot = Bot(token=API_TOKEN)
+
 dp = Dispatcher()
 
 # Глобальная сессия для HTTP-запросов
@@ -45,6 +46,7 @@ class PostCreation(StatesGroup):
 
 async def on_startup():
     global session
+    await bot.delete_webhook()  # Удаляем вебхук
     session = ClientSession()
     print("Бот запущен")
 
