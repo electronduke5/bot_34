@@ -289,13 +289,12 @@ async def send_chance_info(message: Message):
             # Колчиество постов данной редкости в коллекции
             count_post_rarity = get_rarity_count(post.get('collection').get('postsCountByRarity'),
                                                  post['rarity']['name'])
-            points = escape_markdown(f"+{post['rarity']['points']}")
             response = (
                 f"*{post['title']}*\n"
                 f"> {post['rarity']['name']}\n"
                 f"{count} из {count_post_rarity} · {'баян' if is_exist else 'Новый\!'}\n"
                 f"`··············`\n"
-                f"🎖️ _{post['rarity']['points']} очков_\n")
+                f"🎖️ _\\+{post['rarity']['points']} очков_ ")
 
             # Если есть изображение
             if post.get('image_url'):
