@@ -880,11 +880,10 @@ async def complete_post_creation(callback: CallbackQuery, state: FSMContext):
                 post = result['data']['createPost']
                 print(f"post: {post}")
                 response = (
-                    f"✅ Пост *{post['title'].replace('.', r'\.')}* успешно создан\!\n\n"
+                    f"✅ Пост *{escape_markdown(post['title'])}* успешно создан\!\n\n"
                     f"> {post['rarity']['name']}\n"
                     f"Коллекция: {post['collection']['name']}\n"
-                    f"🎖️ _{post['rarity']['points']} очков_"
-                )
+                    f"🎖️ _{post['rarity']['points']} очков_")
 
                 if data.get('media'):
                     if data['media']['type'] == 'photo':
