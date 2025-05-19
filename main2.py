@@ -297,9 +297,9 @@ async def send_chance_info(message: Message):
             response = (
                 f"*{post['title']}*\n" +
                 f"> {post['rarity']['name']}\n" +
-                f"{count} из {count_post_rarity} · {'баян' if is_exist else 'Новый\!'}\n" +
+                f"{count} из {count_post_rarity} · {'баян' if is_exist else escape_markdown('Новый!')}\n" +
                 f"`··············`\n"  +
-                f"🎖️ _\+{post['rarity']['points']} очков_ "
+                f"🎖️ _{'+' + str(post['rarity']['points'])} очков_ "
             )
 
             # Если есть изображение
