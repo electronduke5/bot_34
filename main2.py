@@ -911,7 +911,7 @@ async def complete_post_creation(callback: CallbackQuery, state: FSMContext):
 
     except Exception as e:
         await callback.message.answer("🚫 Ошибка при сохранении поста")
-        print(f"Error: {e.args}")
+        logger.error(f"!!!Ошибка при сохранении поста: {e.args}")
 
     await state.clear()
     await callback.answer()
