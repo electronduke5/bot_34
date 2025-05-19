@@ -826,6 +826,7 @@ async def process_rarity_selection(message: Message, state: FSMContext):
 
 @dp.callback_query(PostCreation.rarity, lambda c: c.data.startswith('rarity_'))
 async def complete_post_creation(callback: CallbackQuery, state: FSMContext):
+    global file
     rarity_id = int(callback.data.split('_')[1])
     data = await state.get_data()
 
@@ -837,7 +838,7 @@ async def complete_post_creation(callback: CallbackQuery, state: FSMContext):
 
     # Отправляем данные на сервер
     mutation = """
-    mutation CreatePost($title: String!, $image_url: String!, $rarity_id: Int!, $collection_id: Int!) {
+    mutation CreatePost($title: String!, $image: Upload!, $rarity_id: Int!, $collection_id: Int!) {
     createPost(
         title: $title
         image_url: $image_url 
@@ -861,7 +862,7 @@ async def complete_post_creation(callback: CallbackQuery, state: FSMContext):
 
     variables = {
         "title": data['title'],
-        "image_url": media_url,
+        "image": file,
         "rarity_id": rarity_id,
         "collection_id": data['collection_id'],
     }
