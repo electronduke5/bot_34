@@ -300,7 +300,7 @@ async def send_chance_info(message: Message):
                 [f"{count} из {count_post_rarity} · {'баян' if is_exist else 'Новый!'}\n"],
                 [f"`··············`\n"])
 
-            response += f"🎖️ _+{post['rarity']['points']} очков_ "
+            response += ([f"🎖️ _+{post['rarity']['points']} очков_ "])
 
             # Если есть изображение
             if post.get('image_url'):
