@@ -833,15 +833,18 @@ async def complete_post_creation(callback: CallbackQuery, state: FSMContext):
     rarity_id = int(callback.data.split('_')[1])
     data = await state.get_data()
 
-    async with aiohttp.ClientSession() as download_session:
         # Получаем файл из Telegram
-        file = await bot.get_file(data['media']['file_id'])
-        file_url = f"https://api.telegram.org/file/bot{API_TOKEN}/{file.file_path}"
+    file = await bot.get_file(data['media']['file_id'])
+    file_url = f"https://api.telegram.org/file/bot{API_TOKEN}/{file.file_path}"
 
-    async with download_session.get(file_url) as resp:
-        file_data = await resp.read()
+    async with aiohttp.ClientSession() as download_session:
+        async with download_session.get(file_url) as resp:
+            if resp.status != 200:
+                await callback.message.answer("❌ Не удалось загрузить файл")
+                logger.error(f"Не удалось загрузить файл: {resp.text()}")
+                return
+            file_data = await resp.read()
 
-    file_base64 = base64.b64encode(file_data).decode('utf-8')
 
     # Отправляем данные на сервер
     operations = {
@@ -887,7 +890,7 @@ async def complete_post_creation(callback: CallbackQuery, state: FSMContext):
                 if 'errors' in result:
                     error_msg = result['errors'][0]['message']
                     await callback.message.answer(f"❌ Ошибка: {error_msg}")
-                    logger.error(f"GraphQL error: {error_msg}")
+                    logger.error(f"GraphQL error when CreatePost: {error_msg}")
                 else:
                     post = result['data']['createPost']
                     response = (
@@ -913,8 +916,8 @@ async def complete_post_creation(callback: CallbackQuery, state: FSMContext):
                         await callback.message.answer(response, parse_mode=ParseMode.MARKDOWN_V2)
 
     except Exception as e:
-        await callback.message.answer("🚫 Ошибка при сохранении поста")
         logger.error(f"!!!Ошибка при сохранении поста: {e}")
+        await callback.message.answer("🚫 Ошибка при сохранении поста")
 
     await state.clear()
     await callback.answer()
