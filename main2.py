@@ -86,10 +86,6 @@ async def register_user(user_data: dict):
             tg_id: $tgId
         ) {
             id
-            username
-            tg_id
-            points
-            gems
         }
     }
     """
@@ -113,15 +109,8 @@ async def get_or_create_user(message: Message):
     """Проверяет существование пользователя и регистрирует при необходимости"""
     user = message.from_user
     query = """
-    query UserProfile($tg_id: String!) {
-        userProfile(tg_id: $tg_id) {
-            user{
-                id
-                tg_id
-                first_name
-                username
-            }
-        }
+    query IsAuth($tg_id: String!){
+        isAuthUser(tg_id: $tg_id)
     }
     """
 
@@ -131,9 +120,9 @@ async def get_or_create_user(message: Message):
         'variables': {'tg_id': str(user.id)}
     }) as resp:
         data = await resp.json()
-        logger.info(f"Data from userProfile: {data}")
+        logger.info(f"Auth check response: {data}")
 
-        if not data.get('data', {}).get('userProfile'):
+        if not data.get('data', {}).get('isAuthUser', False):
             # Пользователь не найден - регистрируем
             user_data = {
                 'id': user.id,
