@@ -299,7 +299,7 @@ async def send_chance_info(message: Message):
                 f"> {post['rarity']['name']}\n" +
                 f"{count} из {count_post_rarity} · {'баян' if is_exist else escape_markdown('Новый!')}\n" +
                 f"`··············`\n"  +
-                f"🎖️ _{'+' + str(post['rarity']['points'])} очков_ "
+                f"🎖️ _{escape_markdown('+' + str(post['rarity']['points']))} очков_ "
             )
 
             # Если есть изображение
