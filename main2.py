@@ -841,7 +841,7 @@ async def complete_post_creation(callback: CallbackQuery, state: FSMContext):
     mutation CreatePost($title: String!, $image: Upload!, $rarity_id: Int!, $collection_id: Int!) {
     createPost(
         title: $title
-        image_url: $image_url 
+        image: $image 
         rarity_id: $rarity_id
         collection_id: $collection_id
     ) {
