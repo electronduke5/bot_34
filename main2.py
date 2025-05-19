@@ -295,11 +295,11 @@ async def send_chance_info(message: Message):
             count_post_rarity = get_rarity_count(post.get('collection').get('postsCountByRarity'),
                                                  post['rarity']['name'])
             response = (
-                f"*{post['title']}*\n"
-                f"> {post['rarity']['name']}\n"
-                f"{count} из {count_post_rarity} · {'баян' if is_exist else 'Новый'}\n",
-                f"`··············`\n"
-                f"🎖️ _+{post['rarity']['points']} очков_ "
+                f"*{post['title']}*\n" +
+                f"> {post['rarity']['name']}\n" +
+                f"{count} из {count_post_rarity} · {'баян' if is_exist else 'Новый\!'}\n" +
+                f"`··············`\n"  +
+                f"🎖️ _\+{post['rarity']['points']} очков_ "
             )
 
             # Если есть изображение
