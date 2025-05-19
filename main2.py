@@ -1,5 +1,6 @@
 import re
 
+from aiogram.client.session import aiohttp
 from aiogram.enums import ParseMode
 
 from aiogram.types import ContentType, URLInputFile, InlineKeyboardMarkup
@@ -826,15 +827,20 @@ async def process_rarity_selection(message: Message, state: FSMContext):
 
 @dp.callback_query(PostCreation.rarity, lambda c: c.data.startswith('rarity_'))
 async def complete_post_creation(callback: CallbackQuery, state: FSMContext):
-    global file
+
     rarity_id = int(callback.data.split('_')[1])
     data = await state.get_data()
 
-    # Формируем медиа-группу если есть файлы
-    media_url = None
-    if data.get('media'):
-        file = await bot.get_file(data['media']['file_id'])
-        media_url = f"https://api.telegram.org/file/bot{API_TOKEN}/{file.file_path}"
+
+
+    file = await bot.get_file(data['media']['file_id'])
+    file_url = f"https://api.telegram.org/file/bot{API_TOKEN}/{file.file_path}"
+
+    async with aiohttp.ClientSession() as imageSession:
+        async with imageSession.get(file_url) as resp:
+            file_data = await resp.read()
+
+    logger.info(f"file in CREATE POST: {(file.file_path, file_data)}")
 
     # Отправляем данные на сервер
     mutation = """
@@ -862,19 +868,18 @@ async def complete_post_creation(callback: CallbackQuery, state: FSMContext):
 
     variables = {
         "title": data['title'],
-        "image": file,
+        "image": (file.file_path, file_data),
         "rarity_id": rarity_id,
         "collection_id": data['collection_id'],
     }
 
     try:
-        async with session.post(GRAPHQL_URL, json={
+        async with imageSession.post(GRAPHQL_URL, json={
             'query': mutation,
             'variables': variables
         }) as resp:
             result = await resp.json()
-            print(f"result: {result}")
-            print(f"mediaUrl: {media_url}")
+            logger.info(f"response from CreatePost: {result}")
 
             if 'errors' in result:
                 error_msg = result['errors'][0]['message']
