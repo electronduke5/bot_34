@@ -1,4 +1,5 @@
 import base64
+import json
 import re
 
 from aiogram.client.session import aiohttp
@@ -832,87 +833,88 @@ async def complete_post_creation(callback: CallbackQuery, state: FSMContext):
     rarity_id = int(callback.data.split('_')[1])
     data = await state.get_data()
 
+    async with aiohttp.ClientSession() as download_session:
+        # Получаем файл из Telegram
+        file = await bot.get_file(data['media']['file_id'])
+        file_url = f"https://api.telegram.org/file/bot{API_TOKEN}/{file.file_path}"
 
-
-    file = await bot.get_file(data['media']['file_id'])
-    file_url = f"https://api.telegram.org/file/bot{API_TOKEN}/{file.file_path}"
-
-    async with aiohttp.ClientSession() as imageSession:
-        async with imageSession.get(file_url) as resp:
-            file_data = await resp.read()
+    async with download_session.get(file_url) as resp:
+        file_data = await resp.read()
 
     file_base64 = base64.b64encode(file_data).decode('utf-8')
 
     # Отправляем данные на сервер
-    mutation = """
-    mutation CreatePost($title: String!, $image: Upload!, $rarity_id: Int!, $collection_id: Int!) {
-    createPost(
-        title: $title
-        image: $image 
-        rarity_id: $rarity_id
-        collection_id: $collection_id
-    ) {
-        id
-        title
-        image_url
-        rarity {
-            name
-            points
+    operations = {
+        "query": """
+                    mutation CreatePost($title: String!, $image: Upload!, $rarity_id: Int!, $collection_id: Int!) {
+                        createPost(
+                            title: $title
+                            image: $image
+                            rarity_id: $rarity_id
+                            collection_id: $collection_id
+                        ) {
+                            id
+                            title
+                            image_url
+                            rarity { name points }
+                            collection { id name }
+                        }
+                    }
+                """,
+        "variables": {
+            "title": data['title'],
+            "rarity_id": rarity_id,
+            "collection_id": data['collection_id'],
+            "image": None
         }
-        collection {
-            id
-            name
-        }
     }
-    }
-    """
-
-    variables = {
-        "title": data['title'],
-        "image": file_base64,
-        "rarity_id": rarity_id,
-        "collection_id": data['collection_id'],
-    }
+    map = {"0": ["variables.image"]}
 
     try:
-        async with imageSession.post(GRAPHQL_URL, json={
-            'query': mutation,
-            'variables': variables
-        }) as resp:
-            result = await resp.json()
-            logger.info(f"response from CreatePost: {result}")
+        async with aiohttp.ClientSession() as upload_session:
+            form_data = aiohttp.FormData()
+            form_data.add_field('operations', json.dumps(operations))
+            form_data.add_field('map', json.dumps(map))
+            form_data.add_field('0', file_data, filename=file.file_path)
 
-            if 'errors' in result:
-                error_msg = result['errors'][0]['message']
-                await callback.message.answer(f"❌ Ошибка: {error_msg}")
-            else:
-                post = result['data']['createPost']
-                print(f"post: {post}")
-                response = (
-                    f"✅ Пост *{escape_markdown(post['title'])}* успешно создан\!\n\n"
-                    f"> {post['rarity']['name']}\n"
-                    f"Коллекция: {post['collection']['name']}\n"
-                    f"🎖️ _{post['rarity']['points']} очков_")
+            async with upload_session.post(
+                    GRAPHQL_URL,
+                    data=form_data,
 
-                if data.get('media'):
-                    if data['media']['type'] == 'photo':
-                        await callback.message.answer_photo(
-                            photo=data['media']['file_id'],
-                            caption=response,
-                            parse_mode=ParseMode.MARKDOWN_V2
-                        )
-                    else:
-                        await callback.message.answer_animation(
-                            animation=data['media']['file_id'],
-                            caption=response,
-                            parse_mode=ParseMode.MARKDOWN_V2
-                        )
+            ) as resp:
+                result = await resp.json()
+
+                if 'errors' in result:
+                    error_msg = result['errors'][0]['message']
+                    await callback.message.answer(f"❌ Ошибка: {error_msg}")
+                    logger.error(f"GraphQL error: {error_msg}")
                 else:
-                    await callback.message.answer(response, parse_mode=ParseMode.MARKDOWN_V2)
+                    post = result['data']['createPost']
+                    response = (
+                        f"✅ Пост *{escape_markdown(post['title'])}* успешно создан\!\n\n"
+                        f"> {post['rarity']['name']}\n"
+                        f"Коллекция: {post['collection']['name']}\n"
+                        f"🎖️ _{post['rarity']['points']} очков_")
+
+                    if data.get('media'):
+                        if data['media']['type'] == 'photo':
+                            await callback.message.answer_photo(
+                                photo=data['media']['file_id'],
+                                caption=response,
+                                parse_mode=ParseMode.MARKDOWN_V2
+                            )
+                        else:
+                            await callback.message.answer_animation(
+                                animation=data['media']['file_id'],
+                                caption=response,
+                                parse_mode=ParseMode.MARKDOWN_V2
+                            )
+                    else:
+                        await callback.message.answer(response, parse_mode=ParseMode.MARKDOWN_V2)
 
     except Exception as e:
         await callback.message.answer("🚫 Ошибка при сохранении поста")
-        logger.error(f"!!!Ошибка при сохранении поста: {e.args}")
+        logger.error(f"!!!Ошибка при сохранении поста: {e}")
 
     await state.clear()
     await callback.answer()
