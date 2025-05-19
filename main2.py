@@ -297,7 +297,7 @@ async def send_chance_info(message: Message):
             response = (
                 [f"*{post['title']}*\n"],
                 [f"> {post['rarity']['name']}\n"],
-                [f"{count} из {count_post_rarity} · {'баян' if is_exist else 'Новый!'}\n"],
+                [f"{count} из {count_post_rarity} · {'баян' if is_exist else 'Новы\!'}\n"],
                 [f"`··············`\n"])
 
             response += f"🎖️ _+{post['rarity']['points']} очков_ "
@@ -313,8 +313,8 @@ async def send_chance_info(message: Message):
                 await message.answer(response, parse_mode=ParseMode.MARKDOWN_V2)
 
     except Exception as e:
+        logger.error(f"Error when chance: {e}")
         await message.answer("🚫 Произошла ошибка при запросе к серверу")
-        print(f"Error: {e}")
 
 
 def count_by_rarity(items, target_rarity):
