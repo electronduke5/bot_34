@@ -1,3 +1,4 @@
+import base64
 import re
 
 from aiogram.client.session import aiohttp
@@ -840,7 +841,7 @@ async def complete_post_creation(callback: CallbackQuery, state: FSMContext):
         async with imageSession.get(file_url) as resp:
             file_data = await resp.read()
 
-    logger.info(f"file in CREATE POST: {(file.file_path, file_data)}")
+    file_base64 = base64.b64encode(file_data).decode('utf-8')
 
     # Отправляем данные на сервер
     mutation = """
@@ -868,7 +869,7 @@ async def complete_post_creation(callback: CallbackQuery, state: FSMContext):
 
     variables = {
         "title": data['title'],
-        "image": (file.file_path, file_data),
+        "image": file_base64,
         "rarity_id": rarity_id,
         "collection_id": data['collection_id'],
     }
