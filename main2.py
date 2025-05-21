@@ -174,8 +174,8 @@ async def show_top_menu(message: Message):
 
 async def send_top(message: Message, sort_by: str, keyboard: InlineKeyboardMarkup = None):
     query = """
-        query TopUsers($sortBy: String!) {
-            userTop(sort_by: $sortBy) {
+        query TopUsers($sortBy: String!, $chat_id:String) {
+            userTop(sort_by: $sortBy, chat_id: $chat_id) {
                 user {
                     tg_id
                     first_name
@@ -193,7 +193,7 @@ async def send_top(message: Message, sort_by: str, keyboard: InlineKeyboardMarku
     try:
         async with session.post(GRAPHQL_URL, json={
             'query': query,
-            'variables': {'sortBy': sort_by}
+            'variables': {'sortBy': sort_by, 'chat_id': message.chat.id}
         }) as resp:
             data = await resp.json()
 
@@ -331,11 +331,11 @@ async def send_chance_info(message: Message):
             count_post_rarity = get_rarity_count(post.get('collection').get('postsCountByRarity'),
                                                  post['rarity']['name'])
             response = (
-                f"*{escape_markdown(post['title'])}*\n" +
-                f"> {post['rarity']['name']}\n" +
-                f"{count} из {count_post_rarity} · {'баян' if is_exist else escape_markdown('Новый!')}\n" +
-                f"`··············`\n"  +
-                f"🎖️ _{escape_markdown('+' + str(post['rarity']['points']))} очков_ "
+                    f"*{escape_markdown(post['title'])}*\n" +
+                    f"> {post['rarity']['name']}\n" +
+                    f"{count} из {count_post_rarity} · {'баян' if is_exist else escape_markdown('Новый!')}\n" +
+                    f"`··············`\n" +
+                    f"🎖️ _{escape_markdown('+' + str(post['rarity']['points']))} очков_ "
             )
 
             # Если есть изображение
@@ -865,11 +865,10 @@ async def process_rarity_selection(message: Message, state: FSMContext):
 
 @dp.callback_query(PostCreation.rarity, lambda c: c.data.startswith('rarity_'))
 async def complete_post_creation(callback: CallbackQuery, state: FSMContext):
-
     rarity_id = int(callback.data.split('_')[1])
     data = await state.get_data()
 
-        # Получаем файл из Telegram
+    # Получаем файл из Telegram
     file = await bot.get_file(data['media']['file_id'])
     file_url = f"https://api.telegram.org/file/bot{API_TOKEN}/{file.file_path}"
 
@@ -880,7 +879,6 @@ async def complete_post_creation(callback: CallbackQuery, state: FSMContext):
                 logger.error(f"Не удалось загрузить файл: {resp.text()}")
                 return
             file_data = await resp.read()
-
 
     # Отправляем данные на сервер
     operations = {
