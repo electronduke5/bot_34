@@ -199,7 +199,7 @@ async def send_top(message: Message, sort_by: str, keyboard: InlineKeyboardBuild
     try:
         async with session.post(GRAPHQL_URL, json={
             'query': query,
-            'variables': {'sortBy': sort_by, 'chat_id': message.chat.id}
+            'variables': {'sortBy': sort_by, 'chat_id': str(message.chat.id)}
         }) as resp:
             data = await resp.json()
 
