@@ -185,7 +185,7 @@ async def send_welcome(message: Message):
             response += f"`··············` \n"
             user_position = None
             for index, user in enumerate(users_top, start=1):
-                response += f"*{index}\.* [{user['first_name']}](tg://user?id={user['tg_id']}) 🎖️ {format_number_with_commas(user['points'])} _pts_ {escape_markdown(f"({user['gems'] / 10})")}\n"
+                response += f"*{index}\.* [{user['first_name']}](tg://user?id={user['tg_id']}) 🎖️ {format_number_with_commas(user['points'])} _pts_ {escape_markdown(f"| {user['gems'] / 10}")}\n"
 
                 # Проверяем, является ли этот пользователь текущим
                 if str(user['tg_id']) == str(message.from_user.id):
