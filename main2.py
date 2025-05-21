@@ -160,138 +160,48 @@ async def send_welcome(message: Message):
 
 # Обработчик команды /top
 @dp.message(Command('top'))
-async def show_top_menu(message: Message):
-    # Создаем клавиатуру
-    builder = InlineKeyboardBuilder()
-    builder.add(
-        InlineKeyboardButton(
-            text="🎖️",
-            callback_data="top_points"
-        ),
-        InlineKeyboardButton(
-            text="🖼️",
-            callback_data="top_posts"
-        ),
-    )
-
-    # Первоначально показываем топ по очкам
-    await send_top(message, sort_by="points", keyboard=builder)
-
-
-async def send_top(message: Message, sort_by: str, keyboard: InlineKeyboardBuilder = None):
+async def send_welcome(message: Message):
     query = """
-        query TopUsers($sortBy: String!, $chat_id:String) {
-            userTop(sort_by: $sortBy, chat_id: $chat_id) {
-                user {
-                    tg_id
-                    first_name
-                    points
-                    gems
-                }
-                userPostsCount {
-                    count
-                }
+        query TopUsers{
+            userTop{
+                tg_id
+                first_name
+                points
             }
         }
     """
-
     try:
         async with session.post(GRAPHQL_URL, json={
             'query': query,
-            'variables': {'sortBy': sort_by, 'chat_id': str(message.chat.id)}
         }) as resp:
             data = await resp.json()
 
             if 'errors' in data:
-                logger.error(f"ОШИБКА Top User: {data}")
                 await message.answer("⚠ Ошибка при получении данных")
                 return
 
             users_top = data['data']['userTop']
-            logger.info(f"user_top: {users_top}")
-
-            if sort_by == "posts_count":
-                users_top = sorted(
-                    users_top,
-                    key=lambda x: sum(item['count'] for item in x['userPostsCount']),
-                    reverse=True
-                )
-            else:
-                users_top = sorted(
-                    users_top,
-                    key=lambda x: x['user']['points'],
-                    reverse=True
-                )
-
-            title = "Топ компании"
-
-            response = f"*{title}*\n"
+            response = f"*Топ компании*\n"
             response += f"`··············` \n"
-
             user_position = None
             for index, user in enumerate(users_top, start=1):
-                try:
-                    # Безопасное получение данных
-                    user_data = user.get('user', {})
-                    points = user_data.get('points', 0)
-                    posts_data = user.get('userPostsCount') or []  # Защита от None
+                response += f"*{index}\.* [{user['first_name']}](tg://user?id={user['tg_id']}) 🎖️ {format_number_with_commas(user['points'])} _pts_ {escape_markdown(f"({user['gems'] / 10})")}\n"
 
-                    points_or_posts = (
-                        format_number_with_commas(points)
-                        if sort_by == "points"
-                        else sum(item.get('count', 0) for item in posts_data)
-                    )
+                # Проверяем, является ли этот пользователь текущим
+                if str(user['tg_id']) == str(message.from_user.id):
+                    user_position = index
 
-                    response += f"*{index}\.* [{user_data.get('first_name', 'Unknown')}](tg://user?id={user_data.get('tg_id', '')}) "
-                    response += f"{'🎖️' if sort_by == 'points' else '🖼'} {points_or_posts} {'pts' if sort_by == 'points' else 'шт'}\n"
-
-                    if str(user_data.get('tg_id')) == str(message.from_user.id):
-                        user_position = index
-
-                except Exception as e:
-                    logger.error(f"Ошибка обработки пользователя {index}: {str(e)}", exc_info=True)
-                    continue
-
-
+            # Добавляем информацию о позиции текущего пользователя
             if user_position is not None:
                 response += f"\n> Вы на *{user_position}* месте\n"
             else:
                 response += f"\n> Вы пока не в топе\n"
 
-            # Если сообщение уже есть - редактируем, иначе отправляем новое
-
-            try:
-                if message.text == response:
-                    return
-                await message.edit_text(response, parse_mode=ParseMode.MARKDOWN_V2, reply_markup=keyboard.as_markup())
-            except:
-                await message.answer(response, parse_mode=ParseMode.MARKDOWN_V2, reply_markup=keyboard.as_markup())
-
+            await message.answer(response, parse_mode=ParseMode.MARKDOWN_V2)
 
     except Exception as e:
-        logger.error(f"Ошибка: {type(e).__name__}: {str(e)}", exc_info=True)
         await message.answer("🚫 Произошла ошибка при запросе к серверу")
-
-
-@dp.callback_query(F.data.startswith('top_'))
-async def process_top_callback(callback_query: CallbackQuery):
-    sort_type = callback_query.data.split('_')[1]
-
-    # Обновляем клавиатуру (можно добавить выделение активной кнопки)
-    builder = InlineKeyboardBuilder()
-    builder.add(
-        InlineKeyboardButton(
-            text="🎖️",
-            callback_data="top_points"
-        ),
-        InlineKeyboardButton(
-            text="🖼️",
-            callback_data="top_posts"
-        ),
-    )
-
-    await send_top(callback_query.message, sort_by=sort_type, keyboard=builder)
-    await callback_query.answer()
+        print(f"Error: {e}")
 
 
 def get_rarity_count(posts_count_by_rarity, rarity_name):
