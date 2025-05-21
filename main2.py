@@ -238,8 +238,7 @@ async def send_top(message: Message, sort_by: str, keyboard: InlineKeyboardBuild
                 except Exception as e:
                     logger.error(f"Ошибка обработки пользователя {index}: {str(e)}", exc_info=True)
                     continue
-            logger.info(
-                f"user_position: {index}")
+
 
             if user_position is not None:
                 response += f"\n> Вы на *{user_position}* месте\n"
@@ -248,6 +247,8 @@ async def send_top(message: Message, sort_by: str, keyboard: InlineKeyboardBuild
 
             # Если сообщение уже есть - редактируем, иначе отправляем новое
             if hasattr(message, 'message_id'):
+                logger.info(
+                    f"MESSAGE HAS ATTR message_id: {message.message_id}")
                 await message.edit_text(response, parse_mode=ParseMode.MARKDOWN_V2, reply_markup=keyboard.as_markup())
             else:
                 await message.answer(response, parse_mode=ParseMode.MARKDOWN_V2, reply_markup=keyboard.as_markup())
