@@ -188,7 +188,7 @@ async def send_welcome(message: Message):
             for index, user in enumerate(users_top, start=1):
                 count_chances = user['gems'] / 10
                 logger.info(f'count chances in user in top: {count_chances}')
-                response += f"*{index}\.* [{user['first_name']}](tg://user?id={user['tg_id']}) 🎖️ {format_number_with_commas(user['points'])} _pts_ | {count_chances} \n"
+                response += f"*{index}\.* [{user['first_name']}](tg://user?id={user['tg_id']}) 🎖️ {format_number_with_commas(user['points'])} _pts_ \| {count_chances} \n"
 
                 # Проверяем, является ли этот пользователь текущим
                 if str(user['tg_id']) == str(message.from_user.id):
