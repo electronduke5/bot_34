@@ -265,16 +265,19 @@ async def process_top_callback(callback_query: CallbackQuery):
     sort_type = callback_query.data.split('_')[1]
 
     # Обновляем клавиатуру (можно добавить выделение активной кнопки)
-    keyboard = InlineKeyboardMarkup(row_width=2)
-    active_btn = "🔘 По очкам" if sort_type == "points" else "По очкам"
-    inactive_btn = "🔘 По постам" if sort_type == "posts" else "По постам"
-
-    keyboard.add(
-        InlineKeyboardButton(active_btn, callback_data="top_points"),
-        InlineKeyboardButton(inactive_btn, callback_data="top_posts")
+    builder = InlineKeyboardBuilder()
+    builder.add(
+        InlineKeyboardButton(
+            text="🎖️",
+            callback_data="top_points"
+        ),
+        InlineKeyboardButton(
+            text="🖼️",
+            callback_data="top_posts"
+        ),
     )
 
-    await send_top(callback_query.message, sort_by=sort_type, keyboard=keyboard)
+    await send_top(callback_query.message, sort_by=sort_type, keyboard=builder)
     await callback_query.answer()
 
 
