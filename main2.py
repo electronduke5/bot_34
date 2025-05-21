@@ -160,19 +160,40 @@ async def send_welcome(message: Message):
 
 # Обработчик команды /top
 @dp.message(Command('top'))
-async def send_welcome(message: Message):
+async def show_top_menu(message: Message):
+    # Создаем клавиатуру
+    keyboard = InlineKeyboardMarkup(row_width=2)
+    keyboard.add(
+        InlineKeyboardButton("🎖️", callback_data="top_points"),
+        InlineKeyboardButton("🖼", callback_data="top_posts")
+    )
+
+    # Первоначально показываем топ по очкам
+    await send_top(message, sort_by="points", keyboard=keyboard)
+
+
+async def send_top(message: Message, sort_by: str, keyboard: InlineKeyboardMarkup = None):
     query = """
-        query TopUsers{
-            userTop{
-                tg_id
-                first_name
-                points
+        query TopUsers($sortBy: String!) {
+            userTop(sort_by: $sortBy) {
+                user {
+                    tg_id
+                    first_name
+                    points
+                    gems
+                }
+                userPostsCount {
+                    rarity
+                    count
+                }
             }
         }
     """
+
     try:
         async with session.post(GRAPHQL_URL, json={
             'query': query,
+            'variables': {'sortBy': sort_by}
         }) as resp:
             data = await resp.json()
 
@@ -181,27 +202,53 @@ async def send_welcome(message: Message):
                 return
 
             users_top = data['data']['userTop']
-            response = f"*Топ компании*\n"
+            title = "Топ по очкам" if sort_by == "points" else "Топ по количеству постов"
+
+            response = f"*{title}*\n"
             response += f"`··············` \n"
+
             user_position = None
             for index, user in enumerate(users_top, start=1):
-                response += f"*{index}\.* [{user['first_name']}](tg://user?id={user['tg_id']}) 🎖️ {format_number_with_commas(user['points'])} _pts_\n"
+                points_or_posts = format_number_with_commas(user['points']) if sort_by == "points" else sum(
+                    item['count'] for item in user['userPostsCount'])
+                response += f"*{index}\.* [{user['first_name']}](tg://user?id={user['tg_id']}) "
+                response += f"🎖️ {points_or_posts} {'pts' if sort_by == 'points' else 'posts'}\n"
 
-                # Проверяем, является ли этот пользователь текущим
                 if str(user['tg_id']) == str(message.from_user.id):
                     user_position = index
 
-            # Добавляем информацию о позиции текущего пользователя
             if user_position is not None:
                 response += f"\n> Вы на *{user_position}* месте\n"
             else:
                 response += f"\n> Вы пока не в топе\n"
 
-            await message.answer(response, parse_mode=ParseMode.MARKDOWN_V2)
+            # Если сообщение уже есть - редактируем, иначе отправляем новое
+            if hasattr(message, 'message_id'):
+                await message.edit_text(response, parse_mode=ParseMode.MARKDOWN_V2, reply_markup=keyboard)
+            else:
+                await message.answer(response, parse_mode=ParseMode.MARKDOWN_V2, reply_markup=keyboard)
 
     except Exception as e:
         await message.answer("🚫 Произошла ошибка при запросе к серверу")
-        print(f"Error: {e}")
+        logger.error(f"Error in send_top: {e}")
+
+
+@dp.callback_query_handler(lambda c: c.data.startswith('top_'))
+async def process_top_callback(callback_query: CallbackQuery):
+    sort_type = callback_query.data.split('_')[1]
+
+    # Обновляем клавиатуру (можно добавить выделение активной кнопки)
+    keyboard = InlineKeyboardMarkup(row_width=2)
+    active_btn = "🔘 По очкам" if sort_type == "points" else "По очкам"
+    inactive_btn = "🔘 По постам" if sort_type == "posts" else "По постам"
+
+    keyboard.add(
+        InlineKeyboardButton(active_btn, callback_data="top_points"),
+        InlineKeyboardButton(inactive_btn, callback_data="top_posts")
+    )
+
+    await send_top(callback_query.message, sort_by=sort_type, keyboard=keyboard)
+    await callback_query.answer()
 
 
 def get_rarity_count(posts_count_by_rarity, rarity_name):
