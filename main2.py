@@ -204,6 +204,7 @@ async def send_top(message: Message, sort_by: str, keyboard: InlineKeyboardBuild
             data = await resp.json()
 
             if 'errors' in data:
+                logger.error(f"ОШИБКА Top User: {data}")
                 await message.answer("⚠ Ошибка при получении данных")
                 return
 
