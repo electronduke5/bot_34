@@ -233,7 +233,7 @@ async def send_top(message: Message, sort_by: str, keyboard: InlineKeyboardMarku
         logger.error(f"Error in send_top: {e}")
 
 
-@dp.callback_query_handler(lambda c: c.data.startswith('top_'))
+@dp.callback_query(F.data.startswith('top_'))
 async def process_top_callback(callback_query: CallbackQuery):
     sort_type = callback_query.data.split('_')[1]
 
