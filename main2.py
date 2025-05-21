@@ -175,7 +175,7 @@ async def show_top_menu(message: Message):
     )
 
     # Первоначально показываем топ по очкам
-    await send_top(message, sort_by="points", keyboard=keyboard)
+    await send_top(message, sort_by="points", keyboard=builder)
 
 
 async def send_top(message: Message, sort_by: str, keyboard: InlineKeyboardBuilder = None):
