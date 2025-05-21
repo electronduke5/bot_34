@@ -217,10 +217,16 @@ async def send_top(message: Message, sort_by: str, keyboard: InlineKeyboardBuild
 
             user_position = None
             for index, user in enumerate(users_top, start=1):
-                points_or_posts = format_number_with_commas(user['points']) if sort_by == "points" else sum(
-                    item['count'] for item in user['userPostsCount'])
+                points = user.get('points', 0)
+                posts_count = sum(item.get('count', 0) for item in user.get('userPostsCount', []))
+
+                points_or_posts = (
+                    format_number_with_commas(points)
+                    if sort_by == "points"
+                    else posts_count
+                )
                 response += f"*{index}\.* [{user['first_name']}](tg://user?id={user['tg_id']}) "
-                response += f"🎖️ {points_or_posts} {'pts' if sort_by == 'points' else 'шт'}\n"
+                response += f"{'🎖️' if sort_by == 'points' else '🖼'} {points_or_posts} {'pts' if sort_by == 'points' else 'шт'}\n"
                 logger.info(f"top element: {index}) {user['first_name']} - {points_or_posts} {'pts' if sort_by == 'points' else 'шт'}")
 
                 if str(user['tg_id']) == str(message.from_user.id):
