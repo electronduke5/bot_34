@@ -217,20 +217,27 @@ async def send_top(message: Message, sort_by: str, keyboard: InlineKeyboardBuild
 
             user_position = None
             for index, user in enumerate(users_top, start=1):
-                points = user.get('points', 0)
-                posts_count = sum(item.get('count', 0) for item in user.get('userPostsCount', []))
+                try:
+                    # Безопасное получение данных
+                    user_data = user.get('user', {})
+                    points = user_data.get('points', 0)
+                    posts_data = user.get('userPostsCount') or []  # Защита от None
 
-                points_or_posts = (
-                    format_number_with_commas(points)
-                    if sort_by == "points"
-                    else posts_count
-                )
-                response += f"*{index}\.* [{user.get('first_name', 'Unknown')}](tg://user?id={user.get('tg_id', '')}) "
-                response += f"{'🎖️' if sort_by == 'points' else '🖼'} {points_or_posts} {'pts' if sort_by == 'points' else 'шт'}\n"
-                logger.info(f"top element: {index}) {user.get('first_name', 'Unknown')} - {points_or_posts} {'pts' if sort_by == 'points' else 'шт'}")
+                    points_or_posts = (
+                        format_number_with_commas(points)
+                        if sort_by == "points"
+                        else sum(item.get('count', 0) for item in posts_data)
+                    )
 
-                if str(user.get('tg_id')) == str(message.from_user.id):
-                    user_position = index
+                    response += f"*{index}\.* [{user_data.get('first_name', 'Unknown')}](tg://user?id={user_data.get('tg_id', '')}) "
+                    response += f"🎖️ {points_or_posts} {'pts' if sort_by == 'points' else 'posts'}\n"
+
+                    if str(user_data.get('tg_id')) == str(message.from_user.id):
+                        user_position = index
+
+                except Exception as e:
+                    logger.error(f"Ошибка обработки пользователя {index}: {str(e)}", exc_info=True)
+                    continue
             logger.info(
                 f"user_position: {index}")
 
