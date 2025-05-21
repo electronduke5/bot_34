@@ -225,11 +225,11 @@ async def send_top(message: Message, sort_by: str, keyboard: InlineKeyboardBuild
                     if sort_by == "points"
                     else posts_count
                 )
-                response += f"*{index}\.* [{user['first_name']}](tg://user?id={user['tg_id']}) "
+                response += f"*{index}\.* [{user.get('first_name', 'Unknown')}](tg://user?id={user.get('tg_id', '')}) "
                 response += f"{'🎖️' if sort_by == 'points' else '🖼'} {points_or_posts} {'pts' if sort_by == 'points' else 'шт'}\n"
-                logger.info(f"top element: {index}) {user['first_name']} - {points_or_posts} {'pts' if sort_by == 'points' else 'шт'}")
+                logger.info(f"top element: {index}) {user.get('first_name', 'Unknown')} - {points_or_posts} {'pts' if sort_by == 'points' else 'шт'}")
 
-                if str(user['tg_id']) == str(message.from_user.id):
+                if str(user.get('tg_id')) == str(message.from_user.id):
                     user_position = index
             logger.info(
                 f"user_position: {index}")
