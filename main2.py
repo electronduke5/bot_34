@@ -187,6 +187,7 @@ async def send_welcome(message: Message):
             user_position = None
             for index, user in enumerate(users_top, start=1):
                 count_chances = user['gems'] / 10
+                logger.info(f'count chances in user in top: {count_chances}')
                 response += f"*{index}\.* [{user['first_name']}](tg://user?id={user['tg_id']}) 🎖️ {format_number_with_commas(user['points'])} _pts_ | {count_chances} \n"
 
                 # Проверяем, является ли этот пользователь текущим
@@ -202,8 +203,8 @@ async def send_welcome(message: Message):
             await message.answer(response, parse_mode=ParseMode.MARKDOWN_V2)
 
     except Exception as e:
+        logger.exception(f'exceprion on top users')
         await message.answer("🚫 Произошла ошибка при запросе к серверу")
-        print(f"Error: {e}")
 
 
 def get_rarity_count(posts_count_by_rarity, rarity_name):
