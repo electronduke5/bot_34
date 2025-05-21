@@ -208,7 +208,8 @@ async def send_top(message: Message, sort_by: str, keyboard: InlineKeyboardBuild
                 return
 
             users_top = data['data']['userTop']
-            title = "Топ по очкам" if sort_by == "points" else "Топ по количеству постов"
+            logger.info(f"user_top: {users_top}")
+            title = "Топ компании"
 
             response = f"*{title}*\n"
             response += f"`··············` \n"
@@ -218,10 +219,13 @@ async def send_top(message: Message, sort_by: str, keyboard: InlineKeyboardBuild
                 points_or_posts = format_number_with_commas(user['points']) if sort_by == "points" else sum(
                     item['count'] for item in user['userPostsCount'])
                 response += f"*{index}\.* [{user['first_name']}](tg://user?id={user['tg_id']}) "
-                response += f"🎖️ {points_or_posts} {'pts' if sort_by == 'points' else 'posts'}\n"
+                response += f"🎖️ {points_or_posts} {'pts' if sort_by == 'points' else 'шт'}\n"
+                logger.info(f"top element: {index}) {user['first_name']} - {points_or_posts} {'pts' if sort_by == 'points' else 'шт'}")
 
                 if str(user['tg_id']) == str(message.from_user.id):
                     user_position = index
+            logger.info(
+                f"user_position: {index}")
 
             if user_position is not None:
                 response += f"\n> Вы на *{user_position}* месте\n"
