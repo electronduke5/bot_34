@@ -162,7 +162,7 @@ async def send_welcome(message: Message):
 @dp.message(Command('top'))
 async def show_top_menu(message: Message):
     # Создаем клавиатуру
-    keyboard = InlineKeyboardMarkup(row_width=2)
+    keyboard = InlineKeyboardBuilder()
     keyboard.add(
         InlineKeyboardButton("🎖️", callback_data="top_points"),
         InlineKeyboardButton("🖼", callback_data="top_posts")
@@ -172,7 +172,7 @@ async def show_top_menu(message: Message):
     await send_top(message, sort_by="points", keyboard=keyboard)
 
 
-async def send_top(message: Message, sort_by: str, keyboard: InlineKeyboardMarkup = None):
+async def send_top(message: Message, sort_by: str, keyboard: InlineKeyboardBuilder = None):
     query = """
         query TopUsers($sortBy: String!, $chat_id:String) {
             userTop(sort_by: $sortBy, chat_id: $chat_id) {
@@ -224,9 +224,9 @@ async def send_top(message: Message, sort_by: str, keyboard: InlineKeyboardMarku
 
             # Если сообщение уже есть - редактируем, иначе отправляем новое
             if hasattr(message, 'message_id'):
-                await message.edit_text(response, parse_mode=ParseMode.MARKDOWN_V2, reply_markup=keyboard)
+                await message.edit_text(response, parse_mode=ParseMode.MARKDOWN_V2, reply_markup=keyboard.as_markup())
             else:
-                await message.answer(response, parse_mode=ParseMode.MARKDOWN_V2, reply_markup=keyboard)
+                await message.answer(response, parse_mode=ParseMode.MARKDOWN_V2, reply_markup=keyboard.as_markup())
 
     except Exception as e:
         await message.answer("🚫 Произошла ошибка при запросе к серверу")
