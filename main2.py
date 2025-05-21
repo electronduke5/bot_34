@@ -246,12 +246,14 @@ async def send_top(message: Message, sort_by: str, keyboard: InlineKeyboardBuild
                 response += f"\n> Вы пока не в топе\n"
 
             # Если сообщение уже есть - редактируем, иначе отправляем новое
-            if hasattr(message, 'message_id'):
-                logger.info(
-                    f"MESSAGE HAS ATTR message_id: {message.message_id}")
+
+            try:
+                if message.text == response:
+                    return
                 await message.edit_text(response, parse_mode=ParseMode.MARKDOWN_V2, reply_markup=keyboard.as_markup())
-            else:
+            except:
                 await message.answer(response, parse_mode=ParseMode.MARKDOWN_V2, reply_markup=keyboard.as_markup())
+
 
     except Exception as e:
         logger.error(f"Ошибка: {type(e).__name__}: {str(e)}", exc_info=True)
