@@ -162,10 +162,16 @@ async def send_welcome(message: Message):
 @dp.message(Command('top'))
 async def show_top_menu(message: Message):
     # Создаем клавиатуру
-    keyboard = InlineKeyboardBuilder()
-    keyboard.add(
-        InlineKeyboardButton("🎖️", callback_data="top_points"),
-        InlineKeyboardButton("🖼", callback_data="top_posts")
+    builder = InlineKeyboardBuilder()
+    builder.add(
+        InlineKeyboardButton(
+            text="🎖️",
+            callback_data="top_points"
+        ),
+        InlineKeyboardButton(
+            text="🖼️",
+            callback_data="top_posts"
+        ),
     )
 
     # Первоначально показываем топ по очкам
