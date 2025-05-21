@@ -241,7 +241,7 @@ async def send_top(message: Message, sort_by: str, keyboard: InlineKeyboardBuild
 
     except Exception as e:
         await message.answer("🚫 Произошла ошибка при запросе к серверу")
-        logger.error(f"Error in send_top: {e}")
+        logger.error(f"Error in send_top: {e.args}")
 
 
 @dp.callback_query(F.data.startswith('top_'))
