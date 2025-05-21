@@ -189,7 +189,6 @@ async def send_top(message: Message, sort_by: str, keyboard: InlineKeyboardBuild
                     gems
                 }
                 userPostsCount {
-                    rarity
                     count
                 }
             }
@@ -210,6 +209,20 @@ async def send_top(message: Message, sort_by: str, keyboard: InlineKeyboardBuild
 
             users_top = data['data']['userTop']
             logger.info(f"user_top: {users_top}")
+
+            if sort_by == "posts_count":
+                users_top = sorted(
+                    users_top,
+                    key=lambda x: sum(item['count'] for item in x['userPostsCount']),
+                    reverse=True
+                )
+            else:
+                users_top = sorted(
+                    users_top,
+                    key=lambda x: x['user']['points'],
+                    reverse=True
+                )
+
             title = "Топ компании"
 
             response = f"*{title}*\n"
@@ -230,7 +243,7 @@ async def send_top(message: Message, sort_by: str, keyboard: InlineKeyboardBuild
                     )
 
                     response += f"*{index}\.* [{user_data.get('first_name', 'Unknown')}](tg://user?id={user_data.get('tg_id', '')}) "
-                    response += f"🎖️ {points_or_posts} {'pts' if sort_by == 'points' else 'posts'}\n"
+                    response += f"{'🎖️' if sort_by == 'points' else '🖼'} {points_or_posts} {'pts' if sort_by == 'points' else 'шт'}\n"
 
                     if str(user_data.get('tg_id')) == str(message.from_user.id):
                         user_position = index
